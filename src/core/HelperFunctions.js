@@ -184,6 +184,19 @@ export default class HelperFunctions {
           }]
         },
         {
+          type: 'select',
+          label: 'Send feedback to target user?',
+          name: 'feedback_to_user',
+          value: 'true',
+          options: [{
+            label: 'Yes',
+            value: 'true'
+          }, {
+            label: 'No',
+            value: 'false'
+          }]
+        },
+        {
           type: 'textarea',
           label: 'Context',
           name: 'feedback_context',

@@ -234,7 +234,8 @@ async function _handleCreatePtProjectDialog(req) {
 async function _handleRecordFeedbackDialog(req) {
   let submission = req.payload.submission;
   let targetUsers = [];
-  let feedbackId = parseInt(req.payload.callback_id.substring(23), 10);
+  let feedbackId = req.payload.callback_id.substring(23);
+  let sendToUser = submission.feedback_to_user === 'true';
   if (submission.feedback_target_user.startsWith('U')) { // user ID
     targetUsers.push(submission.feedback_target_user);
   } else if (submission.feedback_target_user.startsWith('C') // channel ID
@@ -265,43 +266,45 @@ async function _handleRecordFeedbackDialog(req) {
       }, {
         where: { id: feedbackId }
       });
-      feedbackWithSkill = await models.FeedbackInstance.findOne({
-        where: { id: feedbackId },
-        include: [{
-          model: models.Skill,
-          as: 'skill',
-          attributes: ['name'],
+      if (sendToUser) {
+        feedbackWithSkill = await models.FeedbackInstance.findOne({
+          where: { id: feedbackId },
           include: [{
-            model: models.Attribute,
-            as: 'attribute',
+            model: models.Skill,
+            as: 'skill',
             attributes: ['name'],
+            include: [{
+              model: models.Attribute,
+              as: 'attribute',
+              attributes: ['name'],
+            }]
           }]
-        }]
-      });
-      attachments.push({
-        title: 'Feedback',
-        text: feedbackWithSkill.message,
-        color: feedbackWithSkill.type === 'positive' ? 'good' : 'danger'
-      });
-      if (feedbackWithSkill.context) {
-        attachments.push({
-          title: 'Context',
-          text: feedbackWithSkill.context,
-          color: 'warning'
         });
-      }
-      if (feedbackWithSkill.skill) {
         attachments.push({
-          title: 'Skill',
-          text: feedbackWithSkill.skill.name,
-          color: 'warning'
+          title: 'Feedback',
+          text: feedbackWithSkill.message,
+          color: feedbackWithSkill.type === 'positive' ? 'good' : 'danger'
         });
-        if (feedbackWithSkill.skill.attribute) {
+        if (feedbackWithSkill.context) {
           attachments.push({
-            title: 'Attribute',
-            text: feedbackWithSkill.skill.attribute.name,
+            title: 'Context',
+            text: feedbackWithSkill.context,
             color: 'warning'
           });
+        }
+        if (feedbackWithSkill.skill) {
+          attachments.push({
+            title: 'Skill',
+            text: feedbackWithSkill.skill.name,
+            color: 'warning'
+          });
+          if (feedbackWithSkill.skill.attribute) {
+            attachments.push({
+              title: 'Attribute',
+              text: feedbackWithSkill.skill.attribute.name,
+              color: 'warning'
+            });
+          }
         }
       }
     }
@@ -312,10 +315,12 @@ async function _handleRecordFeedbackDialog(req) {
     }
 
     // send feedback as DM (no need to await the promise)
-    slack.chat.postDM(
-      `Hi <@${filteredUsers[i]}>, you have a recorded piece of feedback from <@${req.payload.user.id}>`,
-      filteredUsers[i],
-      attachments);
+    if (sendToUser) {
+      slack.chat.postDM(
+        `Hi <@${filteredUsers[i]}>, you have a recorded piece of feedback from <@${req.payload.user.id}>`,
+        filteredUsers[i],
+        attachments);
+    }
   }
 
   slack.chat.postEphemeralOrDM(
@@ -417,7 +422,7 @@ async function _handlePtAnalyticsDialog(req) {
 }
 
 async function _handleRecordFeedbackDialogCancellation(req) {
-  let feedbackId = parseInt(req.payload.callback_id.substring(23), 10);
+  let feedbackId = req.payload.callback_id.substring(23);
   const feedback = await models.FeedbackInstance.findOne({
     where: { id: feedbackId }
   });
