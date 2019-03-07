@@ -1,9 +1,9 @@
 const path = require('path');
 
-let src = 'src'
+let src = 'src/server'
 
 if(process.env.NODE_ENV === 'production'){
-  src = 'build'
+  src = 'build/server'
 }
 module.exports = {
   "config": path.resolve(`./${src}/config`, 'config.js'),
