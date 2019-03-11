@@ -1,10 +1,15 @@
 import dotenv from 'dotenv';
+import {promisify} from 'util';
+import redis from 'redis';
 import querystring from 'querystring';
 import request from 'requestretry';
 
 if (process.env.NODE_ENV !== 'production') {
   dotenv.config();
 }
+
+const client = redis.createClient(process.env.REDIS_URL);
+const getAsync = promisify(client.get).bind(client);
 
 /**
 * @class Project
@@ -201,22 +206,29 @@ class Project {
     return result.body;
   }
   async getMember(userId, projectId) {
-    const requestOptions = {
-      baseUrl: 'https://www.pivotaltracker.com/services/v5',
-      // fullResponse: false,
-      json: true,
-      headers: {
-        'Content-Type': 'application/json',
-        'X-TrackerToken': process.env.PIVOTAL_TRACKER_TOKEN,
-      }
-    };
-
-    var result = {}; // the result to be returned
-    requestOptions.uri = `/projects/${projectId}/memberships`;
-    result = await request.get(requestOptions);
-    const memberships = result.body;
-    const member = memberships.find(m => m.person.id === userId);
-    return member;
+    let member = await getAsync(`${projectId}/${userId}`);
+    if (member) {
+      return JSON.parse(member);
+    } else {
+      const requestOptions = {
+        baseUrl: 'https://www.pivotaltracker.com/services/v5',
+        // fullResponse: false,
+        json: true,
+        headers: {
+          'Content-Type': 'application/json',
+          'X-TrackerToken': process.env.PIVOTAL_TRACKER_TOKEN,
+        }
+      };
+  
+      var result = {}; // the result to be returned
+      requestOptions.uri = `/projects/${projectId}/memberships`;
+      result = await request.get(requestOptions);
+      const memberships = result.body;
+      member = memberships.find(m => m.person.id === userId);
+      // keys should expire after 24 hours
+      client.set(`${projectId}/${userId}`, JSON.stringify(member), 'EX', 60 * 60 * 24);
+      return member;
+    }
   }
   /**
    * @method addUser

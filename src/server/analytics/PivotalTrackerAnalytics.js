@@ -69,13 +69,9 @@ async function _getUsersCollaborations(items, projectId) {
   let teamStories = items.filter(i => i.owner_ids.length > 1);
 
   // caching function
-  let usersCache = new Map();
-  async function __getUserFromCacheOrPt(userId) {
-    if (!usersCache.has(userId)) {
-      let member = await pivotal.project.getMember(userId, projectId);
-      usersCache.set(userId, { name: member.person.name, email: member.person.email });
-    }
-    return usersCache.get(userId);
+  async function __getUserFromPt(userId) {
+    let member = await pivotal.project.getMember(userId, projectId);
+    return { name: member.person.name, email: member.person.email };
   };
 
   // get all user IDs
@@ -104,14 +100,14 @@ async function _getUsersCollaborations(items, projectId) {
   // create user objects and their collaborations
   for (let i = 0; i < userIds.length; i++) {
     let id = userIds[i];
-    let user = await __getUserFromCacheOrPt(id);
+    let user = await __getUserFromPt(id);
     let allPairedIds =
       collaborations.filter(c => c.pairs.includes(id))
       .map(c => c.pairs[0] !== id ? c.pairs[0] : c.pairs[1]);
     user.collaborations = []
     for(let j = 0; j < allPairedIds.length; j++) {
       let pid = allPairedIds[j];
-      let pairedUser = await __getUserFromCacheOrPt(pid);
+      let pairedUser = await __getUserFromPt(pid);
       let pairedConns = collaborations.filter(c => c.pairs.includes(id) && c.pairs.includes(pid))
       // let stories = pairedConns.map(c => c.stories);
       let stories = [];
@@ -146,13 +142,9 @@ async function _getSkillsVsUsers(items, projectId) {
           || i.current_state === 'accepted'));
 
   // caching function
-  let usersCache = new Map();
-  async function __getUserFromCacheOrPt(userId) {
-    if (!usersCache.has(userId)) {
-      let member = await pivotal.project.getMember(userId, projectId);
-      usersCache.set(userId, { name: member.person.name, email: member.person.email });
-    }
-    return usersCache.get(userId);
+  async function __getUserFromPt(userId) {
+    let member = await pivotal.project.getMember(userId, projectId);
+    return { name: member.person.name, email: member.person.email };
   };
 
   // get all labels
@@ -188,7 +180,7 @@ async function _getSkillsVsUsers(items, projectId) {
       }
     });
     for (let [userId, hit] of hitsMap) {
-      let user = await __getUserFromCacheOrPt(userId);
+      let user = await __getUserFromPt(userId);
       label.users.push({ ...user, ...hit });
     }
     records.push({ name: label.name, users: label.users });
@@ -207,13 +199,9 @@ async function _getStoriesVsUsers(items, projectId) {
           || i.current_state === 'accepted'));
 
   // caching function
-  let usersCache = new Map();
-  async function __getUserFromCacheOrPt(userId) {
-    if (!usersCache.has(userId)) {
-      let member = await pivotal.project.getMember(userId, projectId);
-      usersCache.set(userId, { name: member.person.name, email: member.person.email });
-    }
-    return usersCache.get(userId);
+  async function __getUserFromPt(userId) {
+    let member = await pivotal.project.getMember(userId, projectId);
+    return { name: member.person.name, email: member.person.email };
   };
 
   // create stories and their users
@@ -221,7 +209,7 @@ async function _getStoriesVsUsers(items, projectId) {
     let story = filteredStories[i];
     let users = [];
     for (let j = 0; j < story.owner_ids.length; j++) {
-      let user = await __getUserFromCacheOrPt(story.owner_ids[j]);
+      let user = await __getUserFromPt(story.owner_ids[j]);
       users.push(user);
     }
     records.push({
@@ -248,13 +236,9 @@ async function _getUsersVsSkills(items, projectId) {
           || i.current_state === 'accepted'));
 
   // caching function
-  let usersCache = new Map();
-  async function __getUserFromCacheOrPt(userId) {
-    if (!usersCache.has(userId)) {
-      let member = await pivotal.project.getMember(userId, projectId);
-      usersCache.set(userId, { name: member.person.name, email: member.person.email });
-    }
-    return usersCache.get(userId);
+  async function __getUserFromPt(userId) {
+    let member = await pivotal.project.getMember(userId, projectId);
+    return { name: member.person.name, email: member.person.email };
   };
 
   // get all user IDs
@@ -282,7 +266,7 @@ async function _getUsersVsSkills(items, projectId) {
   for (let i = 0; i < userIds.length; i++) {
     let id = userIds[i];
     let hitsMap = new Map();
-    let user = await __getUserFromCacheOrPt(id);
+    let user = await __getUserFromPt(id);
     user.skills = []
     hits.filter(h => h.userId === id).forEach(h => {
       if (hitsMap.has(h.name)) {
@@ -320,13 +304,9 @@ async function _getUsersVstories(items, projectId) {
           || i.current_state === 'accepted'));
 
   // caching function
-  let usersCache = new Map();
-  async function __getUserFromCacheOrPt(userId) {
-    if (!usersCache.has(userId)) {
-      let member = await pivotal.project.getMember(userId, projectId);
-      usersCache.set(userId, { name: member.person.name, email: member.person.email });
-    }
-    return usersCache.get(userId);
+  async function __getUserFromPt(userId) {
+    let member = await pivotal.project.getMember(userId, projectId);
+    return { name: member.person.name, email: member.person.email };
   };
 
   // get all user IDs
@@ -350,7 +330,7 @@ async function _getUsersVstories(items, projectId) {
   // create user objects and their stories
   for (let i = 0; i < userIds.length; i++) {
     let id = userIds[i];
-    let user = await __getUserFromCacheOrPt(id);
+    let user = await __getUserFromPt(id);
     user.stories = []
     hits.filter(h => h.userId === id).forEach(h => {
       user.stories.push({
