@@ -1,8 +1,8 @@
 import dotenv from 'dotenv';
-import {promisify} from 'util';
 import redis from 'redis';
 import querystring from 'querystring';
 import request from 'requestretry';
+import { promisify } from 'util';
 
 if (process.env.NODE_ENV !== 'production') {
   dotenv.config();
@@ -225,8 +225,10 @@ class Project {
       result = await request.get(requestOptions);
       const memberships = result.body;
       member = memberships.find(m => m.person.id === userId);
+
       // keys should expire after 24 hours
       client.set(`${projectId}/${userId}`, JSON.stringify(member), 'EX', 60 * 60 * 24);
+
       return member;
     }
   }
