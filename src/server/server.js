@@ -1,4 +1,5 @@
 import 'babel-polyfill' // eslint-disable-line
+import cors from 'cors';
 import dotenv from 'dotenv';
 import express from 'express';
 import bodyParser from 'body-parser';
@@ -16,6 +17,7 @@ if (process.env.NODE_ENV !== 'production') {
 }
 
 const app = new express();
+app.use(cors());
 app.use(bodyParser.urlencoded({extended: false}));
 app.use(bodyParser.json());
 
