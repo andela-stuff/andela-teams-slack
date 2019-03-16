@@ -1,10 +1,15 @@
 import dotenv from 'dotenv';
+import redis from 'redis';
 import request from 'request-promise-native';
 import SlackBot from 'slackbots';
+import { promisify } from 'util';
 
 if (process.env.NODE_ENV !== 'production') {
   dotenv.config();
 }
+
+const client = redis.createClient(process.env.REDIS_URL);
+const getAsync = promisify(client.get).bind(client);
 
 const bot = new SlackBot({
   token: process.env.SLACK_BOT_TOKEN, 
@@ -135,26 +140,37 @@ class Resolver {
     return data; // TODO: what to return otherwise
   }
   async getUserInfoObject(userId) {
-    var user;
-    
-    // make a request to resolve the user
-    let url = 'https://slack.com/api/users.info';
-    url += '?user=' + userId;
-    url += '&token=' + process.env.SLACK_USER_TOKEN;
-    let response = await request({
-      url: url,
-      method: 'GET',
-      headers: {
-        'Content-Type': 'application/x-www-form-urlencoded'
-      },
-      resolveWithFullResponse: true
-    });
-    let data = JSON.parse(response.body);
-    user = data.user || user;
+    var user = await getAsync(`slack/${userId}`);
 
-    return user;
+    if (user) {
+      return JSON.parse(user);
+    } else {
+      // make a request to resolve the user
+      let url = 'https://slack.com/api/users.info';
+      url += '?user=' + userId;
+      url += '&token=' + process.env.SLACK_USER_TOKEN;
+      let response = await request({
+        url: url,
+        method: 'GET',
+        headers: {
+          'Content-Type': 'application/x-www-form-urlencoded'
+        },
+        resolveWithFullResponse: true
+      });
+      let data = JSON.parse(response.body);
+      user = data.user || user;
+
+      // keys should expire after 24 hours
+      client.set(`slack/${userId}`, JSON.stringify(user), 'EX', 60 * 60 * 24);
+
+      return user;
+    }
   }
   async getUserProfileObject(userId) {
+    // unfortunately we can't redis-cache the result here
+    // because we need people to be able to update their Github and email on Slack
+    // and have it reflect immediately
+
     var user;
     
     // make a request to resolve the user

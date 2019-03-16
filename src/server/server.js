@@ -1,4 +1,5 @@
 import 'babel-polyfill' // eslint-disable-line
+import cors from 'cors';
 import dotenv from 'dotenv';
 import express from 'express';
 import bodyParser from 'body-parser';
@@ -16,6 +17,7 @@ if (process.env.NODE_ENV !== 'production') {
 }
 
 const app = new express();
+app.use(cors());
 app.use(bodyParser.urlencoded({extended: false}));
 app.use(bodyParser.json());
 
@@ -28,7 +30,7 @@ const slash = new SlashCommandHandler();
 const utils = new Utility();
 
 app.get('/', async (req, res) => {
-  res.status(200).send("Hello World!<br />Welcome to Andela Teams for Slack.");
+  res.status(200).send("Hello World!<br /><br />Welcome to Andela Teams for Slack.");
 });
 
 app.get('/api/analytics/feedback/:token',

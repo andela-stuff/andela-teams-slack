@@ -108,7 +108,7 @@ async function _getFeedbackTable(items) {
       if (resolvedUsersMap.has(item.to)) {
         recipientName = resolvedUsersMap.get(item.to);
       } else {
-        let user = await slack.resolver.getUserProfileObject(item.to);
+        let user = await slack.resolver.getUserInfoObject(item.to);
         recipientName = user.real_name;
         resolvedUsersMap.set(item.to, user.real_name);
       }
@@ -117,7 +117,7 @@ async function _getFeedbackTable(items) {
       if (resolvedUsersMap.has(item.from)) {
         senderName = resolvedUsersMap.get(item.from);
       } else {
-        let user = await slack.resolver.getUserProfileObject(item.from);
+        let user = await slack.resolver.getUserInfoObject(item.from);
         senderName = user.real_name;
         resolvedUsersMap.set(item.from, user.real_name);
       }
