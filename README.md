@@ -1,2 +1,2 @@
 # andela-teams-slack
-A Slack client for [Andela Teams](https://andela-teams-core.herokuapp.com).
+A Slack integration that automates some of the stuff Learning Facilitators do at Andela.
