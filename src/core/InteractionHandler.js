@@ -331,7 +331,8 @@ async function _handleRecordFeedbackDialog(req) {
 }
 
 async function _handleFeedbackAnalyticsDialog(req) {
-  let returnUrl = `https://${req.get('host')}/ui/analytics/feedback`;
+  //let returnUrl = `https://${req.get('host')}/ui/analytics/feedback`;
+  let returnUrl = `https://andela-teams.herokuapp.com`;
   let submission = req.payload.submission;
   let to, type;
   if (submission.feedback_target_user) {
